@@ -1,0 +1,29 @@
+{
+  "name": "hisyeo-abugida-bot",
+  "version": "0.1.0",
+  "description": "Hisyëö Discord Bot",
+  "main": "app.js",
+  "type": "module",
+  "engines": {
+    "node": "16.x"
+  },
+  "scripts": {
+    "start": "node app.js",
+    "register": "node register.js",
+    "dev": "nodemon app.js"
+  },
+  "author": "Jake Russo",
+  "license": "MIT",
+  "dependencies": {
+    "discord-interactions": "^3.4.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.21.2",
+    "text2png": "^2.3.0",
+    "axios": "^1.7.9",
+    "formdata-polyfill": "^4.0.10",
+    "fetch-blob": "^4.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  }
+}
