@@ -1,0 +1,46 @@
+#!/bin/bash
+
+#=================================================
+# SCRIPT FOR MY_WEBAPP
+#
+# This script is a helper to restore a web application.
+#
+# It will restore the application files.
+#
+# The script is intended to be used with the my_webapp package for YunoHost.
+#
+# Usage: sudo yunohost backup restore --apps my_webapp
+#
+#=================================================
+
+#=================================================
+# SET ALL THE THINGS
+#=================================================
+
+# Exit on error
+set -e
+
+# Get the arguments
+user=$YNH_APP_ARG_USER
+app_name=$YNH_APP_INSTANCE_name
+backup_dir=$YNH_BACKUP_DIR
+
+# Set the home of the user
+user_home="/home/$user"
+
+# Set the final path of the app
+final_path="$user_home/www"
+
+#=================================================
+# RESTORE THE APP
+#=================================================
+
+# Restore the files
+sudo yunohost backup restore --apps $app_name --input-dir $backup_dir
+
+#=================================================
+# RESTART THE APP
+#=================================================
+
+# Restart the service
+sudo yunohost app service $app_name restart

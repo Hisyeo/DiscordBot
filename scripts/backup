@@ -1,0 +1,39 @@
+#!/bin/bash
+
+#=================================================
+# SCRIPT FOR MY_WEBAPP
+#
+# This script is a helper to backup a web application.
+#
+# It will backup the application files.
+#
+# The script is intended to be used with the my_webapp package for YunoHost.
+#
+# Usage: sudo yunohost backup create --apps my_webapp
+#
+#=================================================
+
+#=================================================
+# SET ALL THE THINGS
+#=================================================
+
+# Exit on error
+set -e
+
+# Get the arguments
+user=$YNH_APP_ARG_USER
+app_name=$YNH_APP_INSTANCE_NAME
+backup_dir=$YNH_BACKUP_DIR
+
+# Set the home of the user
+user_home="/home/$user"
+
+# Set the final path of the app
+final_path="$user_home/www"
+
+#=================================================
+# BACKUP THE APP
+#=================================================
+
+# Backup the files
+sudo yunohost backup create --apps $app_name --output-dir $backup_dir

@@ -1,0 +1,38 @@
+{
+    "name": "Hisyeo-Abugida Bot",
+    "id": "hisyeo-abugida-bot",
+    "description": "A Discord bot for the Hisyeo language",
+    "license": "MIT",
+    "author": "Jake Russo",
+    "version": "0.1.0",
+    "url": "https://github.com/Hisyeo/DiscordBot",
+    "maintainer": {
+        "name": "Jake Russo",
+        "email": "madcap.russo@gmail.com"
+    },
+    "multi_instance": false,
+    "services": [
+        "nginx"
+    ],
+    "requirements": {
+        "yunohost": ">= 4.0.0"
+    },
+    "arguments": {
+        "install" : [
+            {
+                "name": "domain",
+                "type": "domain"
+            },
+            {
+                "name": "path",
+                "type": "path",
+                "default": "/bot"
+            },
+            {
+                "name": "is_public",
+                "type": "boolean",
+                "default": true
+            }
+        ]
+    }
+}

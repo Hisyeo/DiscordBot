@@ -1,0 +1,38 @@
+#!/bin/bash
+
+#=================================================
+# SCRIPT FOR MY_WEBAPP
+#
+# This script is a helper to remove a web application.
+#
+# It will remove the user, the systemd service and the nginx config.
+#
+# The script is intended to be used with the my_webapp package for YunoHost.
+#
+# Usage: sudo yunohost app remove my_webapp
+#
+#=================================================
+
+#=================================================
+# SET ALL THE THINGS
+#=================================================
+
+# Exit on error
+set -e
+
+# Get the arguments
+user=$YNH_APP_ARG_USER
+app_name=$YNH_APP_INSTANCE_NAME
+
+#=================================================
+# REMOVE THE APP
+#=================================================
+
+# Remove the user
+sudo yunohost user delete $user
+
+# Remove the systemd service
+sudo yunohost app service $app_name remove
+
+# Remove the nginx config
+sudo yunohost app setting $app_name nginx.conf -d

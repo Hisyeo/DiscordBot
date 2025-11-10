@@ -1,0 +1,136 @@
+#!/bin/bash
+
+#=================================================
+# SCRIPT FOR MY_WEBAPP
+#
+# This script is a helper to install a web application in a dedicated
+# user space.
+#
+# It will create a dedicated user, and install the application in its
+# home.
+# A systemd service is also created to launch the app.
+# An nginx configuration file is also created to reverse proxy the app.
+#
+# The script will also try to guess the right command to launch the app,
+# and the right port to reverse proxy.
+#
+# The script is intended to be used with the my_webapp package for YunoHost.
+#
+# Usage: sudo yunohost app install my_webapp --args "domain=domain.tld&path=/path&user=user&app_name=app_name&app_repo=app_repo&app_branch=app_branch&app_commit=app_commit&app_launch_command=app_launch_command&app_port=app_port&is_public=is_public"
+#
+#=================================================
+
+#=================================================
+# SET ALL THE THINGS
+#=================================================
+
+# Exit on error
+set -e
+
+# Get the arguments
+domain=$YNH_APP_ARG_DOMAIN
+path=$YNH_APP_ARG_PATH
+user=$YNH_APP_ARG_USER
+app_name=$YNH_APP_INSTANCE_NAME
+app_repo=$YNH_APP_ARG_APP_REPO
+app_branch=$YNH_APP_ARG_APP_BRANCH
+app_commit=$YNH_APP_ARG_APP_COMMIT
+app_launch_command=$YNH_APP_ARG_APP_LAUNCH_COMMAND
+app_port=$YNH_APP_ARG_APP_PORT
+is_public=$YNH_APP_ARG_IS_PUBLIC
+
+# Set the home of the user
+user_home="/home/$user"
+
+# Set the final path of the app
+final_path="$user_home/www"
+
+# Set the nginx config file
+nginx_conf="/etc/nginx/conf.d/$domain.d/$app_name.conf"
+
+# Set the systemd service file
+systemd_service="/etc/systemd/system/$app_name.service"
+
+#=================================================
+# INSTALL THE APP
+#=================================================
+
+# Create the user
+sudo yunohost user create $user
+
+# Create the home directory
+sudo mkdir -p $user_home
+
+# Clone the repository
+if [ -n "$app_repo" ]; then
+    sudo git clone $app_repo $final_path
+    if [ -n "$app_branch" ]; then
+        sudo git -C $final_path checkout $app_branch
+    fi
+    if [ -n "$app_commit" ]; then
+        sudo git -C $final_path checkout $app_commit
+    fi
+else
+    # If no repo is provided, we copy the content of the current directory
+    sudo cp -r . $final_path
+fi
+
+# Set the owner of the app
+sudo chown -R $user:$user $final_path
+
+# Install the dependencies
+if [ -f "$final_path/package.json" ]; then
+    sudo yunohost app shell $app_name --script "cd $final_path && npm install"
+fi
+
+#=================================================
+# CONFIGURE THE APP
+#=================================================
+
+# Guess the launch command
+if [ -z "$app_launch_command" ]; then
+    if [ -f "$final_path/package.json" ]; then
+        app_launch_command=$(sudo yunohost app shell $app_name --script "cd $final_path && jq -r .scripts.start package.json")
+    fi
+fi
+
+# Guess the port
+if [ -z "$app_port" ]; then
+    if [ -f "$final_path/app.js" ]; then
+        app_port=$(sudo yunohost app shell $app_name --script "cd $final_path && grep -oP 'process.env.PORT || \K[0-9]+' app.js")
+    fi
+fi
+
+# Create the systemd service
+sudo yunohost app service $app_name \
+    --template "simple" \
+    --user "$user" \
+    --working-directory "$final_path" \
+    --command "$app_launch_command" \
+    --environment "PORT=$app_port"
+
+# Create the nginx config
+sudo yunohost app setting $app_name nginx.conf - <<EOF
+location $path {
+    proxy_pass http://localhost:$app_port;
+    proxy_set_header Host \$host;
+    proxy_set_header X-Real-IP \$remote_addr;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto \$scheme;
+}
+EOF
+
+# Make the app public
+if [ "$is_public" = "true" ]; then
+    sudo yunohost app permission $app_name --add "main" --allow "visitors"
+fi
+
+#=================================================
+# START THE APP
+#================================g=================
+
+# Start the service
+sudo yunohost app service $app_name start
+
+# Reload nginx
+sudo yunohost service reload nginx

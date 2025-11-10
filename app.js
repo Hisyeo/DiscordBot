@@ -33,6 +33,8 @@ const likiwikiBtnPrefix = 'likiwiki_game_word_';
 
 const app = express();
 
+app.use(express.static('www'));
+
 const PORT = process.env.PORT || 3000;
 
 app.use(
